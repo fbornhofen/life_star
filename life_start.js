@@ -3,7 +3,7 @@ var config = {
     "host": "localhost",
     "port": "4444",
     "srvOptions": {
-      "node": "."
+      "node": "LivelyKernel/"
     }
   };
 
