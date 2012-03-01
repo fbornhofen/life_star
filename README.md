@@ -1,4 +1,9 @@
 Life Star
 =========
 
-Install jsDAV from git. Will then run on node 0.6.x
+Yet another web server for the Lively Kernel.
+
+    npm install
+    jake
+
+Runs on node 0.6.x
