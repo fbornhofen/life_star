@@ -4,6 +4,7 @@
   "author": "Fabian Bornhofen <fbornhofen@gmail.com>",
   "description": "Another web server for Lively",
   "dependencies": {
-    "jsDAV": "0.1.1"
+    "jsDAV": "0.1.1",
+    "express": "2.5.8"
   }
 }
