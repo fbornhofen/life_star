@@ -20,9 +20,9 @@ var proxy = require('./lib/proxy')(logger);
 
 app.tree = new FsTree(config.srvOptions.node);
 
-var fileHandler = function(req, resp) {
+var fileHandler = function(req, res) {
   req.url = req.url.replace(/\?.*/, ''); // only the bare file name
-  new DavHandler(app, req, resp);
+  new DavHandler(app, req, res);
 };
 
 // Proxy routes
