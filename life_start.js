@@ -11,14 +11,17 @@ var config = {
     }
   };
 
-var tree = new FsTree(config.srvOptions.node);
-app.tree = tree;
+app.tree = new FsTree(config.srvOptions.node);
 
 var fileHandler = function(req, resp) {
+  req.url = req.url.replace(/\?.*/, ''); // only the bare file name
   new DavHandler(app, req, resp);
 };
 
+
 app.get(/.*/, fileHandler);
+
+app.propfind(/.*/, fileHandler);
 
 // FIXME add proxy route
 
