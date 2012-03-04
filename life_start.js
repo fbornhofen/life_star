@@ -22,7 +22,13 @@ app.tree = new FsTree(config.srvOptions.node);
 
 var fileHandler = function(req, res) {
   req.url = req.url.replace(/\?.*/, ''); // only the bare file name
-  new DavHandler(app, req, res);
+  if (req.method == 'POST' || req.method == 'PUT') {
+    req.on('end', function() {  
+        new DavHandler(app, req, res);
+      });
+  } else {
+    new DavHandler(app, req, res);
+  }
 };
 
 // Proxy routes
