@@ -1,7 +1,7 @@
 var exec = require('child_process').exec;
 
 task('default', ['install-core'], function(params) {
-
+  exec('mkdir -p tmp');
 });
 
 desc('install Lively Kernel core files from GitHub');
