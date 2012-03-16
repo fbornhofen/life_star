@@ -4,7 +4,6 @@ Life Star
 Yet another web server for the Lively Kernel. Runs on node 0.6.x
 
     nvm use 0.6.10 # or 11, or ...
-    npm install
     jake
     cd LivelyKernel/
     make install_partsbin
