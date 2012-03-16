@@ -23,14 +23,8 @@ app.tmpDir = './tmp'; // httpPut writes tmp files
 
 var fileHandler = function(req, res) {
   req.url = req.url.replace(/\?.*/, ''); // only the bare file name
-  console.log(req.method + ' ' + req.url);
-  if (req.method == 'POST' || req.method == 'PUT') {
-    req.on('end', function() {  
-        new DavHandler(app, req, res);
-      });
-  } else {
-    new DavHandler(app, req, res);
-  }
+  logger.info(req.method + ' ' + req.url);
+  new DavHandler(app, req, res);
 };
 
 // Proxy routes
