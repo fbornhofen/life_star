@@ -44,6 +44,7 @@ app.put(/.*/, fileHandler);
 app.post(/.*/, fileHandler);
 app.delete(/.*/, fileHandler);
 app.propfind(/.*/, fileHandler);
+app.mkcol(/.*/, fileHandler);
 
 
 // GO GO GO
