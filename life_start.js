@@ -4,19 +4,34 @@ var app = require('express').createServer(),
     FsTree = require('jsDAV/lib/DAV/tree/filesystem').jsDAV_Tree_Filesystem,
     log4js = require('log4js');
 
+// configuration options
+
 var config = {
     "host": "localhost",
-    "port": "4444",
+    "port": 4444,
     "srvOptions": {
       "node": "LivelyKernel/"
     },
-    "logLevel": "debug"
+    "logLevel": "debug",
+    "enableTesting": true 
   };
 
-var logger = log4js.getLogger();
+// set up logger, proxy and testing routes
+
+var logger, 
+    proxy, 
+    testing; 
+
+logger = log4js.getLogger();
 logger.setLevel(config.logLevel);
 
-var proxy = require('./lib/proxy')(logger);
+proxy = require('./lib/proxy')(logger);
+
+if (config.enableTesting) {
+  testing = require('./lib/testing')(app, logger);
+};
+
+// set up DAV
 
 app.tree = new FsTree(config.srvOptions.node);
 app.tmpDir = './tmp'; // httpPut writes tmp files
@@ -50,4 +65,3 @@ app.mkcol(/.*/, fileHandler);
 // GO GO GO
 app.listen(config.port);
 
-//jsdav.createServer(config.srvOptions, config.port, config.host);
