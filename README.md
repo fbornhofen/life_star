@@ -4,6 +4,7 @@ Life Star
 Yet another web server for the Lively Kernel. Runs on node 0.6.x
 
     nvm use 0.6.10 # or 11, or ...
+    # make sure libxml2-dev is installed
     # npm install jake (in case you haven't done that yet)
     jake
     cd LivelyKernel/

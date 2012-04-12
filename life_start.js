@@ -1,5 +1,4 @@
 var app = require('express').createServer(),
-    jsdav = require('jsdav'),
     DavHandler = require('jsDAV/lib/DAV/handler').jsDAV_Handler,
     FsTree = require('jsDAV/lib/DAV/tree/filesystem').jsDAV_Tree_Filesystem,
     log4js = require('log4js');

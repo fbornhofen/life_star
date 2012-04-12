@@ -4,7 +4,7 @@
   "author": "Fabian Bornhofen <fbornhofen@gmail.com>",
   "description": "Another web server for Lively",
   "dependencies": {
-    "jsDAV": "0.1.1",
+    "jsDAV": "https://github.com/mikedeboer/jsDAV/tarball/master",
     "express": "2.5.8",
     "log4js": "0.4.1",
     "request": "2.1.1"
