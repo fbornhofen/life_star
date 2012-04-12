@@ -7,7 +7,7 @@ var app = require('express').createServer(),
 
 var config = {
     "host": "localhost",
-    "port": 4444,
+    "port": 9001,
     "srvOptions": {
       "node": "LivelyKernel/"
     },
