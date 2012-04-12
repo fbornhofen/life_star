@@ -36,7 +36,7 @@ app.tree = new FsTree(config.srvOptions.node);
 app.tmpDir = './tmp'; // httpPut writes tmp files
 
 var fileHandler = function(req, res) {
-  req.url = req.url.replace(/\?.*/, ''); // only the bare file name
+  //req.url = req.url.replace(/\?.*/, ''); // only the bare file name
   logger.info(req.method + ' ' + req.url);
   new DavHandler(app, req, res);
 };
