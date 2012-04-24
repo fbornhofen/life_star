@@ -8,5 +8,6 @@
     "express": "2.5.8",
     "log4js": "0.4.1",
     "request": "2.1.1"
-  }
+  },
+  "main": "life_star"
 }
