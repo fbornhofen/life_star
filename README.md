@@ -12,7 +12,7 @@ Yet another web server for the Lively Kernel. Runs on node 0.6.x
     cd ..
     node life_start.js
 
-Then open http://localhost:4444 in a WebKit based browser or Firefox.
+Then open http://localhost:9001 in a WebKit based browser or Firefox.
 
 This is basically a jsDAV handler on the local file system hooked up to a few express.js routes. Somewhat hacky.
 
