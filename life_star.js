@@ -1,11 +1,13 @@
+/*global require, module*/
 var app = require('express').createServer(),
     DavHandler = require('jsDAV/lib/DAV/handler').jsDAV_Handler,
     FsTree = require('jsDAV/lib/DAV/tree/filesystem').jsDAV_Tree_Filesystem,
     log4js = require('log4js'),
-    proxy = require('./lib/proxy');
-    testing = require('./lib/testing');
+    proxy = require('./lib/proxy'),
+    testing = require('./lib/testing'),
+    WorkspaceHandler = require('./lib/workspace').WorkspaceHandler;
 
-module.exports = function (host, port, fsNode, enableTesting, logLevel) {
+module.exports = function serverSetup(host, port, fsNode, enableTesting, logLevel) {
 
   // configuration options
 
@@ -22,8 +24,7 @@ module.exports = function (host, port, fsNode, enableTesting, logLevel) {
 
   // set up logger, proxy and testing routes
 
-  var logger,
-      proxyHandler;
+  var logger, proxyHandler;
 
   logger = log4js.getLogger();
   logger.setLevel(config.logLevel);
@@ -33,6 +34,9 @@ module.exports = function (host, port, fsNode, enableTesting, logLevel) {
   if (config.enableTesting) {
     testing(app, logger);
   };
+
+  // setup workspace handler
+  var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
 
   // set up DAV
 
@@ -59,11 +63,14 @@ module.exports = function (host, port, fsNode, enableTesting, logLevel) {
     proxy.put(req.params[0], req, res);
   });
 
+  // workspace routes
+  workspaceHandler.registerWith(app);
+
   // DAV routes
   app.get(/.*/, fileHandler);
   app.put(/.*/, fileHandler);
   app.post(/.*/, fileHandler);
-  app.delete(/.*/, fileHandler);
+  app['delete'](/.*/, fileHandler);
   app.propfind(/.*/, fileHandler);
   app.mkcol(/.*/, fileHandler);
 
