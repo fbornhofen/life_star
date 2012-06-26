@@ -1,5 +1,6 @@
 /*global require, module*/
-var app = require('express').createServer(),
+var http = require('http'),
+    express = require('express'),
     DavHandler = require('jsDAV/lib/DAV/handler').jsDAV_Handler,
     FsTree = require('jsDAV/lib/DAV/tree/filesystem').jsDAV_Tree_Filesystem,
     log4js = require('log4js'),
@@ -21,6 +22,8 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
       "enableTesting": enableTesting
     };
 
+  var app = express(),
+      srv = http.createServer(app);
 
   // set up logger, proxy and testing routes
 
@@ -40,8 +43,9 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
 
   // set up DAV
 
-  app.tree = new FsTree(config.srvOptions.node);
-  app.tmpDir = './tmp'; // httpPut writes tmp files
+  srv.tree = new FsTree(config.srvOptions.node);
+  srv.tmpDir = './tmp'; // httpPut writes tmp files
+  srv.options = {};
 
   var fileHandler = function(req, res) {
     if (req.url.match(/\?\d+/)) {
@@ -49,7 +53,7 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
       req.url = req.url.replace(/\?.*/, ''); // only the bare file name
     }
     logger.info(req.method + ' ' + req.url);
-    new DavHandler(app, req, res);
+    new DavHandler(srv, req, res);
   };
 
   // Proxy routes
@@ -76,6 +80,6 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
 
 
   // GO GO GO
-  app.listen(config.port);
+  srv.listen(config.port);
 
 };
