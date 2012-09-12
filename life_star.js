@@ -63,14 +63,19 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
     return req.protocol + '://' + req.url.slice('/proxy/'.length);
   }
   app.get(/\/proxy\/(.*)/, function(req, res) {
-    global.LastProxyArgs = [req, res];
-    proxyHandler.get(extractURLFromProxyRequest(req), req, res);
+    var url = extractURLFromProxyRequest(req);
+    logger.info('Proxy GET %s', url);
+    proxyHandler.get(url, req, res);
   });
   app.post(/\/proxy\/(.*)/, function(req, res) {
-    proxyHandler.post(extractURLFromProxyRequest(req), req, res);
+    var url = extractURLFromProxyRequest(req);
+    logger.info('Proxy POST %s', url);
+    proxyHandler.post(url, req, res);
   });
   app.put(/\/proxy\/(.*)/, function(req, res) {
-    proxyHandler.put(extractURLFromProxyRequest(req), req, res);
+    var url = extractURLFromProxyRequest(req);
+    logger.info('Proxy PUT %s', url);
+    proxyHandler.put(url, req, res);
   });
 
   // workspace routes
