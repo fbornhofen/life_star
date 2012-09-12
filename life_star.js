@@ -57,14 +57,25 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
   };
 
   // Proxy routes
+  function extractURLFromProxyRequest(req) {
+    // example: /proxy/localhost:5984/test/_all_docs?limit=3
+    //       => http://localhost:5984/test/_all_docs?limit=3
+    return req.protocol + '://' + req.url.slice('/proxy/'.length);
+  }
   app.get(/\/proxy\/(.*)/, function(req, res) {
-    proxy.get(req.params[0], req, res);
+    var url = extractURLFromProxyRequest(req);
+    logger.info('Proxy GET %s', url);
+    proxyHandler.get(url, req, res);
   });
   app.post(/\/proxy\/(.*)/, function(req, res) {
-    proxy.post(req.params[0], req, res);
+    var url = extractURLFromProxyRequest(req);
+    logger.info('Proxy POST %s', url);
+    proxyHandler.post(url, req, res);
   });
   app.put(/\/proxy\/(.*)/, function(req, res) {
-    proxy.put(req.params[0], req, res);
+    var url = extractURLFromProxyRequest(req);
+    logger.info('Proxy PUT %s', url);
+    proxyHandler.put(url, req, res);
   });
 
   // workspace routes
