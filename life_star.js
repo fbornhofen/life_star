@@ -1,6 +1,5 @@
 /*global require, module*/
-var http = require('http'),
-    express = require('express'),
+var express = require('express'),
     DavHandler = require('jsDAV/lib/DAV/handler').jsDAV_Handler,
     FsTree = require('jsDAV/lib/DAV/tree/filesystem').jsDAV_Tree_Filesystem,
     log4js = require('log4js'),
@@ -8,22 +7,44 @@ var http = require('http'),
     testing = require('./lib/testing'),
     WorkspaceHandler = require('./lib/workspace').WorkspaceHandler;
 
-module.exports = function serverSetup(host, port, fsNode, enableTesting, logLevel) {
+module.exports = function serverSetup(config) {
 
-  // configuration options
+  config.host                = config.host || "localhost";
+  config.port                = config.port || 9001;
+  config.srvOptions          = config.srvOptions || {node: config.fsNode || "../LivelyKernel/"};
+  config.logLevel            = config.logLevel || "debug";
+  config.enableTesting       = config.enableTesting;
+  config.sslServerKey        = config.sslServerKey;
+  config.sslServerCert       = config.sslServerCert;
+  config.sslCACert           = config.sslCACert;
+  config.enableSSL           = config.enableSSL && config.sslServerKey && config.sslServerCert && config.sslCACert;
+  config.enableSSLClientAuth = config.enableSSL && config.enableSSLClientAuth;
 
-  var config = {
-      "host": host || "localhost",
-      "port": port || 9001,
-      "srvOptions": {
-        "node": fsNode || "../LivelyKernel/"
-      },
-      "logLevel": logLevel || "debug",
-      "enableTesting": enableTesting
-    };
+  var app = express(), srv;
 
-  var app = express(),
-      srv = http.createServer(app);
+  if (config.enableSSL) {
+    var https = require('https'),
+        fs = require('fs'),
+        options = {
+          // Specify the key and certificate file
+          key: fs.readFileSync(config.sslServerKey),
+          cert: fs.readFileSync(config.sslServerCert),
+          // Specify the Certificate Authority certificate
+          ca: fs.readFileSync(config.sslCACert),
+
+          // This is where the magic happens in Node. All previous steps simply
+          // setup SSL (except the CA). By requesting the client provide a
+          // certificate, we are essentially authenticating the user.
+          requestCert: config.enableSSLClientAuth,
+
+          // If specified as "true", no unauthenticated traffic will make it to
+          // the route specified.
+          rejectUnauthorized: config.enableSSLClientAuth
+        }
+    srv = require('https').createServer(options, app);
+  } else {
+    srv = require('http').createServer(app);
+  }
 
   // set up logger, proxy and testing routes
   var logger = log4js.getLogger();
@@ -47,6 +68,8 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
       req.url = req.url.replace(/\?.*/, ''); // only the bare file name
     }
     logger.info(req.method + ' ' + req.url);
+    if (!srv.baseUri) srv.baseUri = '/';
+    if (!srv.getBaseUri) srv.getBaseUri = function() { return this.baseUri };
     new DavHandler(srv, req, res);
   };
 

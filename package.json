@@ -2,6 +2,7 @@
   "name": "life_star",
   "version": "0.0.3",
   "author": "Fabian Bornhofen <fbornhofen@gmail.com>",
+  "contributors": ["Robert Krahn <robert.krahn@gmail.com>"],
   "description": "Another web server for Lively",
   "dependencies": {
     "jsDAV": "https://github.com/mikedeboer/jsDAV/tarball/master",
