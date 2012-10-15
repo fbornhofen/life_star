@@ -26,23 +26,17 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
       srv = http.createServer(app);
 
   // set up logger, proxy and testing routes
-
-  var logger, proxyHandler;
-
-  logger = log4js.getLogger();
+  var logger = log4js.getLogger();
   logger.setLevel(config.logLevel);
 
-  proxyHandler = proxy(logger);
+  var proxyHandler = proxy(logger);
 
-  if (config.enableTesting) {
-    testing(app, logger);
-  };
+  if (config.enableTesting) { testing(app, logger); };
 
   // setup workspace handler
   var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
 
   // set up DAV
-
   srv.tree = new FsTree(config.srvOptions.node);
   srv.tmpDir = './tmp'; // httpPut writes tmp files
   srv.options = {};
@@ -62,35 +56,19 @@ module.exports = function serverSetup(host, port, fsNode, enableTesting, logLeve
     //       => http://localhost:5984/test/_all_docs?limit=3
     return req.protocol + '://' + req.url.slice('/proxy/'.length);
   }
-  app.get(/\/proxy\/(.*)/, function(req, res) {
+
+  app.all(/\/proxy\/(.*)/, function(req, res) {
     var url = extractURLFromProxyRequest(req);
-    logger.info('Proxy GET %s', url);
-    proxyHandler.get(url, req, res);
-  });
-  app.post(/\/proxy\/(.*)/, function(req, res) {
-    var url = extractURLFromProxyRequest(req);
-    logger.info('Proxy POST %s', url);
-    proxyHandler.post(url, req, res);
-  });
-  app.put(/\/proxy\/(.*)/, function(req, res) {
-    var url = extractURLFromProxyRequest(req);
-    logger.info('Proxy PUT %s', url);
-    proxyHandler.put(url, req, res);
+    logger.info('Proxy %s %s', req.method, url);
+    proxyHandler[req.method.toLowerCase()](url, req, res);
   });
 
   // workspace routes
   workspaceHandler.registerWith(app);
 
   // DAV routes
-  app.get(/.*/, fileHandler);
-  app.put(/.*/, fileHandler);
-  app.post(/.*/, fileHandler);
-  app['delete'](/.*/, fileHandler);
-  app.propfind(/.*/, fileHandler);
-  app.mkcol(/.*/, fileHandler);
-
+  app.all(/.*/, fileHandler);
 
   // GO GO GO
   srv.listen(config.port);
-
 };
