@@ -52,27 +52,6 @@ module.exports = function serverSetup(config) {
 
   var proxyHandler = proxy(logger);
 
-  if (config.enableTesting) { testing(app, logger); };
-
-  // setup workspace handler
-  var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
-
-  // set up DAV
-  srv.tree = new FsTree(config.srvOptions.node);
-  srv.tmpDir = './tmp'; // httpPut writes tmp files
-  srv.options = {};
-
-  var fileHandler = function(req, res) {
-    if (req.url.match(/\?\d+/)) {
-      logger.info('replacing etag');
-      req.url = req.url.replace(/\?.*/, ''); // only the bare file name
-    }
-    logger.info(req.method + ' ' + req.url);
-    if (!srv.baseUri) srv.baseUri = '/';
-    if (!srv.getBaseUri) srv.getBaseUri = function() { return this.baseUri };
-    new DavHandler(srv, req, res);
-  };
-
   // Proxy routes
   function extractURLFromProxyRequest(req) {
     // example: /proxy/localhost:5984/test/_all_docs?limit=3
@@ -86,8 +65,29 @@ module.exports = function serverSetup(config) {
     proxyHandler[req.method.toLowerCase()](url, req, res);
   });
 
-  // workspace routes
+  // test server
+  if (config.enableTesting) { testing(app, logger); };
+
+  // setup workspace handler / routes
+  var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
   workspaceHandler.registerWith(app);
+
+  // set up DAV
+  srv.tree = new FsTree(config.srvOptions.node);
+  srv.tmpDir = './tmp'; // httpPut writes tmp files
+  srv.options = {};
+  // https server has slightly different interface
+  if (!srv.baseUri) srv.baseUri = '/';
+  if (!srv.getBaseUri) srv.getBaseUri = function() { return this.baseUri };
+
+  function fileHandler(req, res) {
+    if (req.url.match(/\?\d+/)) {
+      logger.info('replacing etag');
+      req.url = req.url.replace(/\?.*/, ''); // only the bare file name
+    }
+    logger.info(req.method + ' ' + req.url);
+    new DavHandler(srv, req, res);
+  };
 
   // DAV routes
   app.all(/.*/, fileHandler);
