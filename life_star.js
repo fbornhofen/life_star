@@ -2,6 +2,7 @@
 var express = require('express'),
     DavHandler = require('jsDAV/lib/DAV/handler').jsDAV_Handler,
     FsTree = require('jsDAV/lib/DAV/tree/filesystem').jsDAV_Tree_Filesystem,
+    defaultPlugins = require("jsDAV/lib/DAV/server").DEFAULT_PLUGINS,
     log4js = require('log4js'),
     proxy = require('./lib/proxy'),
     testing = require('./lib/testing'),
@@ -76,6 +77,8 @@ module.exports = function serverSetup(config) {
   srv.tree = new FsTree(config.srvOptions.node);
   srv.tmpDir = './tmp'; // httpPut writes tmp files
   srv.options = {};
+  // for showing dir contents
+  srv.plugins = {browser: defaultPlugins.browser};
   // https server has slightly different interface
   if (!srv.baseUri) srv.baseUri = '/';
   if (!srv.getBaseUri) srv.getBaseUri = function() { return this.baseUri };
