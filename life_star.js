@@ -20,6 +20,7 @@ module.exports = function serverSetup(config) {
   config.sslCACert           = config.sslCACert;
   config.enableSSL           = config.enableSSL && config.sslServerKey && config.sslServerCert && config.sslCACert;
   config.enableSSLClientAuth = config.enableSSL && config.enableSSLClientAuth;
+  config.behindProxy         = config.behindProxy || false;
 
   var app = express(), srv;
 
@@ -47,13 +48,15 @@ module.exports = function serverSetup(config) {
     srv = require('http').createServer(app);
   }
 
+  // express specifically handles the case of sitting behind a proxy, see
+  // http://expressjs.com/guide.html#proxies
+  if (config.behindProxy) app.enable('trust proxy');
   // set up logger, proxy and testing routes
   var logger = log4js.getLogger();
   logger.setLevel(config.logLevel);
 
-  var proxyHandler = proxy(logger);
-
   // Proxy routes
+  var proxyHandler = proxy(logger);
   function extractURLFromProxyRequest(req) {
     // example: /proxy/localhost:5984/test/_all_docs?limit=3
     //       => http://localhost:5984/test/_all_docs?limit=3
