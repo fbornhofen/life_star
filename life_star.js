@@ -62,19 +62,24 @@ module.exports = function serverSetup(config) {
     proxy: config.behindProxy,
     cookie: {path: '/', httpOnly: false, maxAge: null}
   }));
-  function extractApacheClientCertHeadersIntoCookie(req, res, next) {
-    var session = req.session;
-    if (!session.user) {
-      var user = req.get('x-forwarded-user');
-      if (user) session.user = user;
+
+  if (config.behindProxy) {
+    // the proxy server can set x-forwarded-* headers for client
+    // authorization, extract those and assign to the session cookie
+    function extractApacheClientCertHeadersIntoCookie(req, res, next) {
+      var session = req.session;
+      if (!session.user) {
+        var user = req.get('x-forwarded-user');
+        if (user) session.user = user;
+      }
+      if (!session.email) {
+        var email = req.get('x-forwarded-email');
+        if (email) session.email = email;
+      }
+      next();
     }
-    if (!session.email) {
-      var email = req.get('x-forwarded-email');
-      if (email) session.email = email;
-    }
-    next();
+    app.use(extractApacheClientCertHeadersIntoCookie);
   }
-  app.use(extractApacheClientCertHeadersIntoCookie);
 
   // set up logger, proxy and testing routes
   var logger = log4js.getLogger();
