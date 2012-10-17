@@ -51,6 +51,32 @@ module.exports = function serverSetup(config) {
   // express specifically handles the case of sitting behind a proxy, see
   // http://expressjs.com/guide.html#proxies
   if (config.behindProxy) app.enable('trust proxy');
+
+  app.use(express.bodyParser());
+  app.use(express.cookieParser());
+
+  // store auth information into a cookie
+  app.use(express.cookieSession({
+    key: 'livelykernel-sign-on',
+    secret: 'foo',
+    proxy: config.behindProxy,
+    cookie: {path: '/', httpOnly: false, maxAge: null}
+  }));
+  function extractApacheClientCertHeadersIntoCookie(req, res, next) {
+    var session = req.session;
+    if (!session.user && req.get('ssl_client_verify') === "SUCCESS" && req.get('ssl_client_i_dn')) {
+      var clientIdParts = req.get('ssl_client_i_dn').split('/'), user, email;
+      clientIdParts.forEach(function(ea) {
+        if (/^CN=/.test(ea)) { user = ea.substring(3) }
+        if (/^emailAddress=/.test(ea)) { email = ea.substring('emailAddress='.length); }
+      });
+      session.user = user;
+      session.email = email;
+    }
+    next();
+  }
+  app.use(extractApacheClientCertHeadersIntoCookie);
+
   // set up logger, proxy and testing routes
   var logger = log4js.getLogger();
   logger.setLevel(config.logLevel);
