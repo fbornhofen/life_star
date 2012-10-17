@@ -64,14 +64,13 @@ module.exports = function serverSetup(config) {
   }));
   function extractApacheClientCertHeadersIntoCookie(req, res, next) {
     var session = req.session;
-    if (!session.user && req.get('ssl_client_verify') === "SUCCESS" && req.get('ssl_client_i_dn')) {
-      var clientIdParts = req.get('ssl_client_i_dn').split('/'), user, email;
-      clientIdParts.forEach(function(ea) {
-        if (/^CN=/.test(ea)) { user = ea.substring(3) }
-        if (/^emailAddress=/.test(ea)) { email = ea.substring('emailAddress='.length); }
-      });
-      session.user = user;
-      session.email = email;
+    if (!session.user) {
+      var user = req.get('x-forwarded-user');
+      if (user) session.user = user;
+    }
+    if (!session.email) {
+      var email = req.get('x-forwarded-email');
+      if (email) session.email = email;
     }
     next();
   }
