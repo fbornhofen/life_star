@@ -105,7 +105,10 @@ module.exports = function serverSetup(config) {
       if (!session.email) {
         var email = req.get('x-forwarded-email');
         if (email && email !== '(null)') session.email = email;
-        if (extractEmailFromCert(req.get('ssl_client_cert'), session, next)) { return; }
+        else if (extractEmailFromCert(req.get('ssl_client_cert'), session, next)) {
+            // extractEmailFromCert thinks it can help but is async, so don't
+            // call next immediately
+            return; }
       }
       next();
     }
