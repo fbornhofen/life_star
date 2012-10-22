@@ -153,7 +153,6 @@ module.exports = function serverSetup(config) {
 
   function fileHandler(req, res) {
     if (req.url.match(/\?\d+/)) {
-      logger.info('replacing etag');
       req.url = req.url.replace(/\?.*/, ''); // only the bare file name
     }
     logger.info(req.method + ' ' + req.url);
