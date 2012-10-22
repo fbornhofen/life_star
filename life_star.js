@@ -118,7 +118,18 @@ module.exports = function serverSetup(config) {
 
   // set up logger, proxy and testing routes
   var logger = log4js.getLogger();
-  logger.setLevel(config.logLevel);
+  logger.setLevel((config.logLevel || 'OFF').toUpperCase());
+  // FIXME either use log4js or default epxress logger..
+  express.logger.token('user', function(req, res) {
+      return (req.session && req.session.user) || 'unknown user';
+  });
+  express.logger.token('email', function(req, res) {
+      return (req.session && req.session.email) || '';
+  });
+  // default format:
+  // ':remote-addr - - [:date] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
+  var fmt = express.logger.default.replace('":method', '":user <:email>" ":method');
+  app.use(express.logger(fmt));
 
   // Proxy routes
   var proxyHandler = proxy(logger);
@@ -130,7 +141,6 @@ module.exports = function serverSetup(config) {
 
   app.all(/\/proxy\/(.*)/, function(req, res) {
     var url = extractURLFromProxyRequest(req);
-    logger.info('Proxy %s %s', req.method, url);
     proxyHandler[req.method.toLowerCase()](url, req, res);
   });
 
@@ -155,7 +165,6 @@ module.exports = function serverSetup(config) {
     if (req.url.match(/\?\d+/)) {
       req.url = req.url.replace(/\?.*/, ''); // only the bare file name
     }
-    logger.info(req.method + ' ' + req.url);
     new DavHandler(srv, req, res);
   };
 
