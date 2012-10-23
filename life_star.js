@@ -6,6 +6,7 @@ var express = require('express'),
     log4js = require('log4js'),
     proxy = require('./lib/proxy'),
     testing = require('./lib/testing'),
+    auth = require('./lib/auth'),
     WorkspaceHandler = require('./lib/workspace').WorkspaceHandler,
     spawn = require('child_process').spawn;
 
@@ -64,59 +65,16 @@ module.exports = function serverSetup(config) {
     cookie: {path: '/', httpOnly: false, maxAge: null}
   }));
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-
+  // deal with authentication
+  // -=-=-=-=-=-=-=-=-=-=-=-=-
   if (config.behindProxy) {
-    // the proxy server can set x-forwarded-* headers for client
-    // authorization, extract those and assign to the session cookie
-
-    function extractEmailFromCert(certSource, session, next) {
-      if (!certSource) { return false };
-      // fix the newlines in certSource
-      certSource = '-----BEGIN CERTIFICATE-----\n'
-                 + certSource
-                   .replace('-----BEGIN CERTIFICATE----- ', '')
-                   .replace('-----END CERTIFICATE----- ', '')
-                   .replace(/ /g, '\n')
-                 + '-----END CERTIFICATE-----\n';
-      var openssl = spawn('openssl', ["x509", "-inform", "pem", "-email", "-noout"], {
-        stdio: ['pipe', 'pipe', process.stderr]
-      });
-
-      var result = '';
-      openssl.stdout.on('data', function(data) { result += data.toString(); })
-
-      openssl.on('exit', function() {
-        if (result.length > 0) session.email = result.replace(/\n/g, '');
-        next();
-      });
-
-      // send the cert to openssl, decode it and query for the email
-      openssl.stdin.write(certSource);
-      openssl.stdin.end();
-
-      return true;
-    }
-
-    function extractApacheClientCertHeadersIntoCookie(req, res, next) {
-      var session = req.session;
-      if (!session.user) {
-        var user = req.get('x-forwarded-user');
-        if (user) session.user = user;
-      }
-      if (!session.email) {
-        var email = req.get('x-forwarded-email');
-        if (email && email !== '(null)') session.email = email;
-        else if (extractEmailFromCert(req.get('ssl_client_cert'), session, next)) {
-            // extractEmailFromCert thinks it can help but is async, so don't
-            // call next immediately
-            return; }
-      }
-      next();
-    }
-
-    app.use(extractApacheClientCertHeadersIntoCookie);
+    app.use(auth.extractApacheClientCertHeadersIntoSession);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // set up logger, proxy and testing routes
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   var logger = log4js.getLogger();
   logger.setLevel((config.logLevel || 'OFF').toUpperCase());
   // FIXME either use log4js or default epxress logger..
@@ -131,27 +89,35 @@ module.exports = function serverSetup(config) {
   var fmt = express.logger.default.replace('":method', '":user <:email>" ":method');
   app.use(express.logger(fmt));
 
+  // -=-=-=-=-=-=-
   // Proxy routes
+  // -=-=-=-=-=-=-
   var proxyHandler = proxy(logger);
   function extractURLFromProxyRequest(req) {
     // example: /proxy/localhost:5984/test/_all_docs?limit=3
     //       => http://localhost:5984/test/_all_docs?limit=3
     return req.protocol + '://' + req.url.slice('/proxy/'.length);
   }
-
   app.all(/\/proxy\/(.*)/, function(req, res) {
     var url = extractURLFromProxyRequest(req);
     proxyHandler[req.method.toLowerCase()](url, req, res);
   });
 
+  // -=-=-=-=-=-
   // test server
+  // -=-=-=-=-=-
   if (config.enableTesting) { testing(app, logger); };
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // setup workspace handler / routes
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
   workspaceHandler.registerWith(app);
 
+  // -=-=-=-=-=-
   // set up DAV
+  // -=-=-=-=-=-
   srv.tree = new FsTree(config.srvOptions.node);
   srv.tmpDir = './tmp'; // httpPut writes tmp files
   srv.options = {};
@@ -171,6 +137,8 @@ module.exports = function serverSetup(config) {
   // DAV routes
   app.all(/.*/, fileHandler);
 
+  // -=-=-=-=-
   // GO GO GO
+  // -=-=-=-=-
   srv.listen(config.port);
 };
