@@ -8,6 +8,7 @@ var express = require('express'),
     testing = require('./lib/testing'),
     auth = require('./lib/auth'),
     WorkspaceHandler = require('./lib/workspace').WorkspaceHandler,
+    SubserverHandler = require('./lib/subservers').SubserverHandler,
     spawn = require('child_process').spawn,
     fs = require('fs'),
     path = require('path');
@@ -113,18 +114,12 @@ module.exports = function serverSetup(config) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // setup workspace handler / routes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
-  workspaceHandler.registerWith(app);
+  new WorkspaceHandler({}, config.srvOptions.node).registerWith(app);
 
   // -=-=-=-=-=-=-=-
   // setup subserver
   // -=-=-=-=-=-=-=-
-  fs.readdirSync("./subservers/").forEach(function(file) {
-    if (!(/\.js$/.test(file))) return;
-    var serverName = file.substr(0, file.lastIndexOf('.'));
-      console.log('starting subserver ' + serverName);
-    require('./subservers/' + serverName)('/nodejs/' + serverName + '/', app);
-  });
+  new SubserverHandler({baseURL: '/nodejs/'}).registerWith(app);
 
   // -=-=-=-=-=-
   // set up DAV
