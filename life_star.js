@@ -8,7 +8,9 @@ var express = require('express'),
     testing = require('./lib/testing'),
     auth = require('./lib/auth'),
     WorkspaceHandler = require('./lib/workspace').WorkspaceHandler,
-    spawn = require('child_process').spawn;
+    spawn = require('child_process').spawn,
+    fs = require('fs'),
+    path = require('path');
 
 module.exports = function serverSetup(config) {
 
@@ -28,7 +30,6 @@ module.exports = function serverSetup(config) {
 
   if (config.enableSSL) {
     var https = require('https'),
-        fs = require('fs'),
         options = {
           // Specify the key and certificate file
           key: fs.readFileSync(config.sslServerKey),
@@ -115,6 +116,16 @@ module.exports = function serverSetup(config) {
   var workspaceHandler = new WorkspaceHandler({}, config.srvOptions.node);
   workspaceHandler.registerWith(app);
 
+  // -=-=-=-=-=-=-=-
+  // setup subserver
+  // -=-=-=-=-=-=-=-
+  fs.readdirSync("./subservers/").forEach(function(file) {
+    if (!(/\.js$/.test(file))) return;
+    var serverName = file.substr(0, file.lastIndexOf('.'));
+      console.log('starting subserver ' + serverName);
+    require('./subservers/' + serverName)('/nodejs/' + serverName + '/', app);
+  });
+
   // -=-=-=-=-=-
   // set up DAV
   // -=-=-=-=-=-
@@ -141,4 +152,6 @@ module.exports = function serverSetup(config) {
   // GO GO GO
   // -=-=-=-=-
   srv.listen(config.port);
+
+  return srv;
 };
