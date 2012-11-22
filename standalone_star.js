@@ -1,4 +1,7 @@
-var life_star = require('./life_star');
-
-life_star('localhost', 9001, '../LivelyKernel', true, 'debug');
-
+require('./life_star')({
+    host: 'localhost',
+    port: 9001,
+    fsnode: '../LivelyKernel',
+    enableTesting: true,
+    logLevel: 'debug'
+});
